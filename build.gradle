@@ -49,38 +49,42 @@ dependencies {
     mybatisGenerator 'org.mybatis.generator:mybatis-generator-core:1.3.2'
     mybatisGenerator 'tk.mybatis:mapper:3.3.2'
 }
+
 //配置generator的mysql配置文件
 def getDbProperties = {
     def properties = new Properties()
     file("src/main/resources/generator/generator.properties").withInputStream { inputStream ->
         properties.load(inputStream)
     }
-    properties;
+    properties
 }
+
 task mybatisGenerate << {
     def properties = getDbProperties()
     ant.properties['targetProject'] = projectDir.path
+    ant.properties['driverLocation'] = properties.getProperty("jdbc.driverLocation")
     ant.properties['driverClass'] = properties.getProperty("jdbc.driverClass")
     ant.properties['connectionURL'] = properties.getProperty("jdbc.connectionURL")
     ant.properties['userId'] = properties.getProperty("jdbc.userId")
     ant.properties['password'] = properties.getProperty("jdbc.password")
     ant.properties['src_main_java'] = sourceSets.main.java.srcDirs[0].path
     ant.properties['src_main_resources'] = sourceSets.main.resources.srcDirs[0].path
-    ant.properties['modelPackage'] = this.modelPackage
-    ant.properties['mapperPackage'] = this.mapperPackage
-    ant.properties['sqlMapperPackage'] = this.sqlMapperPackage
+    ant.properties['modelPackage'] = properties.getProperty("modelPackage")
+    ant.properties['mapperPackage'] = properties.getProperty("mapperPackage")
+    ant.properties['sqlMapperPackage'] = properties.getProperty("sqlMapperPackage")
     ant.taskdef(
             name: 'mbgenerator',
             classname: 'org.mybatis.generator.ant.GeneratorAntTask',
             classpath: configurations.mybatisGenerator.asPath
     )
     ant.mbgenerator(overwrite: true,
-            configfile: 'db/generatorConfig.xml', verbose: true) {
+            configfile: 'src/main/resources/generator/generator-config.xml', verbose: true) {
         propertyset {
             propertyref(name: 'targetProject')
-            propertyref(name: 'userId')
+            propertyref(name: 'driverLocation')
             propertyref(name: 'driverClass')
             propertyref(name: 'connectionURL')
+            propertyref(name: 'userId')
             propertyref(name: 'password')
             propertyref(name: 'src_main_java')
             propertyref(name: 'src_main_resources')
